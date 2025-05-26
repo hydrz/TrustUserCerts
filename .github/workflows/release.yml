@@ -1,0 +1,75 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build_and_release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip unzip
+
+      - name: Fix script permissions
+        run: |
+          chmod +x workflow.sh
+          ./workflow.sh fix-perm
+
+      - name: Extract version from tag
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Processing version: $VERSION"
+
+      - name: Validate module files
+        run: |
+          ./workflow.sh test
+
+      - name: Build module zip
+        run: |
+          ./workflow.sh build
+          echo "MODULE_ZIP=$(ls *.zip 2>/dev/null || echo "")" >> $GITHUB_ENV
+
+      - name: Verify build success
+        run: |
+          if [ -z "${{ env.MODULE_ZIP }}" ]; then
+            echo "Error: Failed to build module zip"
+            exit 1
+          fi
+          echo "Successfully built: ${{ env.MODULE_ZIP }}"
+
+      - name: Generate changelog
+        run: |
+          VERSION_NO_V=$(echo "${{ env.VERSION }}" | sed 's/^v//')
+          CHANGELOG=$(sed -n "/## ${{ env.VERSION }}/,/## /p" CHANGELOG.md | sed '/## v/,$d' | sed '1d')
+          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
+          echo "$CHANGELOG" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ env.VERSION }} 发布
+          body: |
+            # ${{ env.VERSION }} 更新说明
+
+            ${{ env.CHANGELOG }}
+
+            ## 安装方法
+
+            通过Magisk管理器安装此模块
+          files: ${{ env.MODULE_ZIP }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

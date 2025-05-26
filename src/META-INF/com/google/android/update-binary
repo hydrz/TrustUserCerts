@@ -49,8 +49,8 @@ is_legacy_script() {
 
 print_modname() {
   local authlen len namelen pounds
-  namelen=`echo -n $MODNAME | wc -c`
-  authlen=$((`echo -n $MODAUTH | wc -c` + 3))
+  namelen=$(echo -n $MODNAME | wc -c)
+  authlen=$(($(echo -n $MODAUTH | wc -c) + 3))
   [ $namelen -gt $authlen ] && len=$namelen || len=$authlen
   len=$((len + 2))
   pounds=$(printf "%${len}s" | tr ' ' '*')
@@ -97,9 +97,9 @@ unzip -o "$ZIPFILE" module.prop -d $TMPDIR >&2
 
 $BOOTMODE && MODDIRNAME=modules_update || MODDIRNAME=modules
 MODULEROOT=$NVBASE/$MODDIRNAME
-MODID=`grep_prop id $TMPDIR/module.prop`
-MODNAME=`grep_prop name $TMPDIR/module.prop`
-MODAUTH=`grep_prop author $TMPDIR/module.prop`
+MODID=$(grep_prop id $TMPDIR/module.prop)
+MODNAME=$(grep_prop name $TMPDIR/module.prop)
+MODAUTH=$(grep_prop author $TMPDIR/module.prop)
 MODPATH=$MODULEROOT/$MODID
 
 # Create mod paths
@@ -181,8 +181,8 @@ fi
 
 # Remove stuffs that don't belong to modules
 rm -rf \
-$MODPATH/system/placeholder $MODPATH/customize.sh \
-$MODPATH/README.md $MODPATH/.git* 2>/dev/null
+  $MODPATH/system/placeholder $MODPATH/customize.sh \
+  $MODPATH/README.md $MODPATH/.git* 2>/dev/null
 
 #############
 # Finalizing

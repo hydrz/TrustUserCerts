@@ -1,0 +1,17 @@
+# 忽略构建生成的zip文件
+*.zip
+
+# 忽略日志文件
+log.txt
+
+# 忽略系统文件
+.DS_Store
+__MACOSX
+
+# 忽略IDE配置
+.idea/
+.vscode/
+
+# 其他临时文件
+*.tmp
+*.bak

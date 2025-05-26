@@ -1,0 +1,55 @@
+name: Update Changelog
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号 (例如: v1.1)'
+        required: true
+      description:
+        description: '版本描述 (使用 | 分隔多行)'
+        required: true
+
+jobs:
+  update_changelog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up environment and permissions
+        run: |
+          chmod +x workflow.sh scripts/*.sh
+
+      - name: Update version
+        run: |
+          ./workflow.sh version ${{ github.event.inputs.version }}
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Update CHANGELOG.md
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          DATE=$(date +"%Y-%m-%d")
+          DESCRIPTION=$(echo "${{ github.event.inputs.description }}" | sed 's/|/\\n- /g')
+
+          # 在CHANGELOG.md的开头添加新版本信息
+          sed -i "s|# 更新日志|# 更新日志\n\n## $VERSION ($DATE)\n- $DESCRIPTION|" CHANGELOG.md
+
+          echo "已更新 CHANGELOG.md"
+
+      - name: Commit changes
+        run: |
+          git add module.prop update.json CHANGELOG.md
+          git commit -m "准备发布 ${{ github.event.inputs.version }}"
+          git tag ${{ github.event.inputs.version }}
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+          tags: true
