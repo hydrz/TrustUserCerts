@@ -3,7 +3,10 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
+
+permissions:
+  contents: write
 
 jobs:
   build_and_release:
@@ -38,7 +41,9 @@ jobs:
       - name: Build module zip
         run: |
           ./workflow.sh build
-          echo "MODULE_ZIP=$(ls *.zip 2>/dev/null || echo "")" >> $GITHUB_ENV
+          MODULE_ZIP=$(ls *.zip 2>/dev/null || echo "")
+          echo "MODULE_ZIP=$MODULE_ZIP" >> $GITHUB_ENV
+          echo "Built ZIP file: $MODULE_ZIP"
 
       - name: Verify build success
         run: |
@@ -48,13 +53,41 @@ jobs:
           fi
           echo "Successfully built: ${{ env.MODULE_ZIP }}"
 
+      - name: Debug information
+        run: |
+          echo "GitHub Context Information:"
+          echo "  Ref: ${{ github.ref }}"
+          echo "  Ref Name: ${{ github.ref_name }}"
+          echo "  Event: ${{ github.event_name }}"
+          echo "  Repository: ${{ github.repository }}"
+          echo "  Actor: ${{ github.actor }}"
+          echo "  SHA: ${{ github.sha }}"
+          echo "Environment Variables:"
+          echo "  MODULE_ZIP: ${{ env.MODULE_ZIP }}"
+          echo "  VERSION: ${{ env.VERSION }}"
+          ls -la
+
       - name: Generate changelog
         run: |
-          VERSION_NO_V=$(echo "${{ env.VERSION }}" | sed 's/^v//')
-          CHANGELOG=$(sed -n "/## ${{ env.VERSION }}/,/## /p" CHANGELOG.md | sed '/## v/,$d' | sed '1d')
-          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
-          echo "$CHANGELOG" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          # 确保版本变量可用
+          echo "Current version tag: ${{ github.ref_name }}"
+          echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+
+          # 从CHANGELOG.md中提取相关部分
+          VERSION="${{ github.ref_name }}"
+          CHANGELOG_CONTENT=$(sed -n "/## ${VERSION}/,/## /p" CHANGELOG.md | sed '/## v/,$d' | sed '1d')
+
+          # 如果提取失败，提供一个默认消息
+          if [ -z "$CHANGELOG_CONTENT" ]; then
+            CHANGELOG_CONTENT="此版本包含错误修复和性能改进。"
+          fi
+
+          # 使用多行语法正确设置环境变量
+          {
+            echo "CHANGELOG<<EOF"
+            echo "$CHANGELOG_CONTENT"
+            echo "EOF"
+          } >> $GITHUB_ENV
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
@@ -69,7 +102,6 @@ jobs:
 
             通过Magisk管理器安装此模块
           files: ${{ env.MODULE_ZIP }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           draft: false
           prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
