@@ -24,12 +24,6 @@ if [ ! -d "src" ] || [ ! -d "scripts" ]; then
     exit 1
 fi
 
-# 确保关键目录存在
-if [ ! -d "src" ] || [ ! -d "scripts" ]; then
-    echo "错误: 关键目录缺失。确保项目结构正确，包含 'src' 和 'scripts' 目录。"
-    exit 1
-fi
-
 # 定义支持的命令和对应的脚本
 case "$1" in
     build)

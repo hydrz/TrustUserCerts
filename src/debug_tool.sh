@@ -2,6 +2,8 @@
 # 调试工具脚本
 MODDIR=${0%/*}
 LOG_FILE="$MODDIR/log.txt"
+# 设置语言环境
+export LANG=C
 
 # 设备信息
 echo "======= 设备信息 =======" > $LOG_FILE

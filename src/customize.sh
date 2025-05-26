@@ -46,7 +46,7 @@ check_android_version() {
 # 主函数
 main() {
   ui_print "******************************"
-  ui_print "  高级用户证书信任模块 v1.0   "
+  ui_print "  高级用户证书信任模块 v1.1   "
   ui_print "******************************"
 
   # 检测Android版本
