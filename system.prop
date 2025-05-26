@@ -1,0 +1,8 @@
+# 此文件包含希望在系统级别修改的属性
+# 用于增强用户证书信任的兼容性
+
+# 通知系统可能存在新的证书
+ro.security.keystore.secure_by_default=false
+
+# 禁用 SSL 固定
+persist.data.disablectf=1
